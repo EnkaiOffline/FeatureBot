@@ -1,0 +1,1 @@
+bot: java -classpath target/classes;target/libs org.enkai.featurebot.Main
