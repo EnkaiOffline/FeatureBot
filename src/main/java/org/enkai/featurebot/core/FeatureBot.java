@@ -4,10 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.lang.annotation.Annotation;
@@ -83,7 +87,29 @@ public class FeatureBot extends TelegramLongPollingBot {
     }
 
     private void processCallbackQuery(CallbackQuery query) {
+        Feature targetFeature = null;
+        for(Feature feature : features) {
+            if(query.getData().startsWith(feature.getName())) {
+                targetFeature = feature;
+                break;
+            }
+        }
+        if(targetFeature != null) {
+            query.setData(query.getData().substring(targetFeature.getName().length()));
+            log.info("Processing " + query.getData() + " callback with " + targetFeature.getName());
+            targetFeature.processCallbackQuery(query);
+        } else {
+            log.info("Feature for processing " + query.getData() + " callback not found");
+        }
+    }
 
+    private InlineKeyboardMarkup addCallbackMarking(Feature feature, InlineKeyboardMarkup replyMarkup) {
+        for(List<InlineKeyboardButton> row : replyMarkup.getKeyboard()) {
+            for (InlineKeyboardButton button : row) {
+                button.setCallbackData(feature.getName() + button.getCallbackData());
+            }
+        }
+        return replyMarkup;
     }
 
     private void invokeInNewThread(Object origin, Method method, Message message) {
@@ -99,7 +125,11 @@ public class FeatureBot extends TelegramLongPollingBot {
 
     //Useful methods
 
-    public boolean sendText(Message message, String text, boolean isReply) {
+    public boolean sendText(Feature feature, Message message, String text, boolean isReply) {
+        return sendText(feature, message, text, isReply, null);
+    }
+
+    public boolean sendText(Feature feature, Message message, String text, boolean isReply, InlineKeyboardMarkup replyMarkup) {
         log.info("Sending message to \"{}\", text: \"{}\", is reply: {}", message.getFrom().getUserName(), text, isReply);
         SendMessage.SendMessageBuilder sendMessage = SendMessage.builder()
                 .chatId(message.getChatId() + "")
@@ -107,12 +137,33 @@ public class FeatureBot extends TelegramLongPollingBot {
         if(isReply) {
             sendMessage.replyToMessageId(message.getMessageId());
         }
+        if(replyMarkup != null) {
+            addCallbackMarking(feature, replyMarkup);
+            sendMessage.replyMarkup(replyMarkup);
+        }
         try {
             log.info("Message sent successfully");
             execute(sendMessage.build());
             return true;
         } catch (TelegramApiException e) {
-            log.info("Error sending message");
+            log.info("Error sending message, "  + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean editText( Message message, String text, InlineKeyboardMarkup replyMarkup) {
+        EditMessageText editText = EditMessageText.builder()
+                .messageId(message.getMessageId())
+                .chatId(message.getChatId().toString())
+                .replyMarkup(message.getReplyMarkup())
+                .text(text).build();
+        try {
+            log.info("Message edited successfully");
+            execute(editText);
+            return true;
+        } catch (TelegramApiException e) {
+            log.info("Error editing message, " + e.getMessage());
             e.printStackTrace();
             return false;
         }
