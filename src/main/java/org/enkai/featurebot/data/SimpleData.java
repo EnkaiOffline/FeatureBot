@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
-
+//Тимчасова затичка для дата леэра, поки не прикручу хібернейт
 public class SimpleData {
 
     private static final SimpleData instance = new SimpleData();
@@ -39,7 +39,7 @@ public class SimpleData {
         }
     }
     
-    public String get(String key) {
+    public synchronized String get(String key) {
         String sql = "SELECT value FROM alldata WHERE key='" + key + "';";
         try {
             checkConnection();
@@ -57,7 +57,7 @@ public class SimpleData {
         }
     }
 
-    public void put(String key, String value) {
+    public synchronized void put(String key, String value) {
         String sql = "INSERT INTO alldata VALUES ('" + key + "', '" + value + "') ON CONFLICT (key) DO UPDATE SET value='" + value + "'";
         try {
             checkConnection();
