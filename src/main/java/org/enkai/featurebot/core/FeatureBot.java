@@ -192,4 +192,8 @@ public class FeatureBot extends TelegramLongPollingBot {
         return System.getenv("TelegramBotUsername");
     }
 
+    public String getToken() {
+        return System.getenv("TelegramBotToken");
+    }
+
 }
