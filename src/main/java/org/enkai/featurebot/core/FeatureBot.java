@@ -56,8 +56,8 @@ public class FeatureBot extends TelegramLongPollingBot {
         }
         if(update.hasMessage() && update.getMessage().hasText()) {
             String input = update.getMessage().getText();
-            if(input.startsWith("@" + getBotUsername())) {//Remove preceding @BotName
-                input = input.substring(getBotUsername().length() + 1);
+            if(input.startsWith("/") && input.endsWith("@" + getBotUsername())) {//Remove ending @BotName
+                input = input.substring(0, input.length() - getBotUsername().length() - 1);
             }
             User user = update.getMessage().getFrom();
             log.info("Username: {}; Tag: {} {}; Id: {}; Input: {};", user.getFirstName(), (user.getLastName() == null ? "" : user.getLastName()), user.getUserName(), user.getId(), input);
