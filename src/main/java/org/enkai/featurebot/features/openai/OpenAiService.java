@@ -52,7 +52,7 @@ public class OpenAiService {
         try {
             HttpRequest httpRequest = HttpRequest.newBuilder()
                     .POST(HttpRequest.BodyPublishers.ofString(body))
-                    .setHeader("Authorization", "Bearer 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")
+                    .setHeader("Authorization", System.getenv("OpenAIToken"))
                     .setHeader("Content-Type", "application/json")
                     .uri(URI.create("https://api.openai.com/v1/chat/completions")).build();
             return client.send(httpRequest, HttpResponse.BodyHandlers.ofString()).body();

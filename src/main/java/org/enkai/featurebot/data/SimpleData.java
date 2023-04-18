@@ -8,7 +8,7 @@ import java.sql.*;
 public class SimpleData {
 
     private static final SimpleData instance = new SimpleData();
-    private static final String CONNECTION_STRING = "jdbc:postgresql://ec2-54-73-22-169.eu-west-1.compute.amazonaws.com:5432/dej4tsu68hcpra?password=ee2e788c7621422c08efcb442231c99bd2711c9e98a53db1d1bc9ece584025fb&sslmode=require&user=lvzngugstpjqfu";
+    private final String CONNECTION_STRING;
 
     protected Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -19,6 +19,7 @@ public class SimpleData {
     }
 
     private SimpleData() {
+        CONNECTION_STRING = System.getenv("JDBC_DATABASE_URL");
         try {
             Class.forName("org.postgresql.Driver");
             connection = DriverManager
