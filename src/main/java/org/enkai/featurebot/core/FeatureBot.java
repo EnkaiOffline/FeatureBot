@@ -4,11 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.User;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -96,14 +94,14 @@ public class FeatureBot extends TelegramLongPollingBot {
         }
         if(targetFeature != null) {
             query.setData(query.getData().substring(targetFeature.getName().length()));
-            log.info("Processing " + query.getData() + " callback with " + targetFeature.getName());
+            log.info("Processing '" + query.getData() + "' callback with " + targetFeature.getName());
             targetFeature.processCallbackQuery(query);
         } else {
             log.info("Feature for processing " + query.getData() + " callback not found");
         }
     }
 
-    private InlineKeyboardMarkup addCallbackMarking(Feature feature, InlineKeyboardMarkup replyMarkup) {
+    public InlineKeyboardMarkup addCallbackMarking(Feature feature, InlineKeyboardMarkup replyMarkup) {
         for(List<InlineKeyboardButton> row : replyMarkup.getKeyboard()) {
             for (InlineKeyboardButton button : row) {
                 button.setCallbackData(feature.getName() + button.getCallbackData());
@@ -142,8 +140,8 @@ public class FeatureBot extends TelegramLongPollingBot {
             sendMessage.replyMarkup(replyMarkup);
         }
         try {
-            log.info("Message sent successfully");
             execute(sendMessage.build());
+            log.info("Message sent successfully");
             return true;
         } catch (TelegramApiException e) {
             log.info("Error sending message, "  + e.getMessage());
@@ -159,11 +157,31 @@ public class FeatureBot extends TelegramLongPollingBot {
                 .replyMarkup(message.getReplyMarkup())
                 .text(text).build();
         try {
-            log.info("Message edited successfully");
             execute(editText);
+            log.info("Message edited successfully");
             return true;
         } catch (TelegramApiException e) {
             log.info("Error editing message, " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean sendPhoto(Feature feature, Message message, String link, boolean isReply, InlineKeyboardMarkup replyMarkup) {
+        addCallbackMarking(feature, replyMarkup);
+        SendPhoto.SendPhotoBuilder sendPhoto = SendPhoto.builder()
+                .chatId(message.getChatId().toString())
+                .photo(new InputFile(link))
+                .replyMarkup(replyMarkup);
+        if(isReply) {
+            sendPhoto.replyToMessageId(message.getMessageId());
+        }
+        try {
+            execute(sendPhoto.build());
+            log.info("Photo sent successfully");
+            return true;
+        } catch (TelegramApiException e) {
+            log.info("Error sending photo, "  + e.getMessage());
             e.printStackTrace();
             return false;
         }
