@@ -58,7 +58,7 @@ public class OpenAiFeature extends Feature {
                 db.put(id + "", results.get(i));
                 row.add(InlineKeyboardButton.builder().text((i + 1) + "").callbackData((i + 1) + "" + id).build());
             }
-            bot.sendText(this, message, "№1\n" + results.get(0), message.isReply(), InlineKeyboardMarkup.builder().keyboardRow(row).build());
+            bot.sendText(this, message, "№1\n" + results.get(0), true, InlineKeyboardMarkup.builder().keyboardRow(row).build());
         }
     }
 
@@ -117,7 +117,7 @@ public class OpenAiFeature extends Feature {
     @Override
     public void processCallbackQuery(CallbackQuery query) {
         String data = query.getData();
-        char num = data.charAt(1);
+        char num = data.charAt(0);
         String text = db.get(data.substring(1));
         String sendText = "№" + num + "\n" + text;
         bot.editText(query.getMessage(), sendText, query.getMessage().getReplyMarkup());
